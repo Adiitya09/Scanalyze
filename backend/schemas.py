@@ -94,6 +94,16 @@ class ResultBase(BaseModel):
 class ResultCreate(ResultBase):
     exam_id: str
 
+class ResultExamInfo(BaseModel):
+    id: int
+    exam_id: str
+    title: str
+    max_marks: int
+    total_questions: int
+
+    class Config:
+        from_attributes = True
+
 class Result(ResultBase):
     id: int
     exam_id: int
@@ -103,8 +113,9 @@ class Result(ResultBase):
     unanswered: int
     score: float
     percentage: float
-    processing_confidence: Optional[float]
+    processing_confidence: Optional[float] = None
     created_at: datetime
+    exam: Optional[ResultExamInfo] = None
     
     class Config:
         from_attributes = True

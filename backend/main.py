@@ -393,6 +393,16 @@ async def upload_omr_sheet(
             detail=f"File format not supported. Allowed: {', '.join(allowed_extensions)}"
         )
     
+    # Validate file size
+    file.file.seek(0, 2)
+    file_size = file.file.tell()
+    file.file.seek(0)
+    
+    if file_size == 0:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty")
+    if file_size > settings.MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail=f"File exceeds maximum size limit of {settings.MAX_FILE_SIZE // (1024*1024)}MB")
+    
     # Generate unique filename
     unique_filename = f"{uuid.uuid4()}{file_extension}"
     file_path = os.path.join(UPLOAD_DIR, unique_filename)
@@ -427,14 +437,16 @@ async def upload_omr_sheet(
         wrong_answers = 0
         
         for q_num, student_ans in student_answers.items():
-            if exam.answer_key.get(q_num) == student_ans:
+            correct_ans = exam.answer_key.get(q_num)
+            if student_ans != "MULTIPLE" and correct_ans == student_ans:
                 correct_answers += 1
             else:
                 wrong_answers += 1
         
         unanswered = exam.total_questions - len(student_answers)
-        score = correct_answers  # Assuming 1 mark per question
-        percentage = (correct_answers / exam.total_questions) * 100
+        marks_per_question = exam.max_marks / exam.total_questions if exam.total_questions > 0 else 1.0
+        score = round(correct_answers * marks_per_question, 2)
+        percentage = round((score / exam.max_marks) * 100, 2) if exam.max_marks > 0 else 0.0
         
         # Save result to database (replace existing if resubmission)
         if replacing_submission:
@@ -614,6 +626,18 @@ async def get_result(
     if not exam:
         raise HTTPException(status_code=404, detail="Exam not found")
     
+    # Authorization check: students can only see their own results, teachers can see results for their exams
+    if current_user.role == "student" and current_user.roll_number != roll_number:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Students can only view their own results"
+        )
+    if current_user.role == "teacher" and exam.teacher_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Teachers can only view results for their own exams"
+        )
+    
     # Get result
     result = db.query(Result).filter(
         Result.exam_id == exam.id,
@@ -628,13 +652,26 @@ async def get_result(
     for q_num in range(1, exam.total_questions + 1):
         q_str = str(q_num)
         correct_answer = exam.answer_key.get(q_str, "")
-        student_answer = result.student_answers.get(q_str, "Not Answered")
+        raw_student_ans = result.student_answers.get(q_str, "Not Answered")
+        
+        if raw_student_ans == "MULTIPLE":
+            display_ans = "Multiple Marked"
+            ans_status = "incorrect"
+        elif raw_student_ans == "Not Answered":
+            display_ans = "Not Answered"
+            ans_status = "unanswered"
+        elif raw_student_ans == correct_answer:
+            display_ans = raw_student_ans
+            ans_status = "correct"
+        else:
+            display_ans = raw_student_ans
+            ans_status = "incorrect"
         
         answer_breakdown.append({
             "question": q_str,
             "correct_answer": correct_answer,
-            "student_answer": student_answer,
-            "status": "correct" if correct_answer == student_answer else "incorrect" if student_answer != "Not Answered" else "unanswered"
+            "student_answer": display_ans,
+            "status": ans_status
         })
     
     return ResultSummary(
@@ -748,6 +785,59 @@ async def get_exam_statistics(
         lowest_score=lowest_score,
         pass_rate=round(pass_rate, 2),
         question_wise_accuracy=question_wise_accuracy
+    )
+
+@app.get("/api/exams/{exam_id}/export/csv", tags=["Exams"])
+async def export_exam_results_csv(
+    exam_id: str,
+    current_user: User = Depends(require_teacher),
+    db: Session = Depends(get_db)
+):
+    """Export exam results to CSV (Teacher only)."""
+    import io
+    import csv
+    from fastapi.responses import StreamingResponse
+
+    exam = db.query(Exam).filter(
+        Exam.exam_id == exam_id,
+        Exam.teacher_id == current_user.id
+    ).first()
+    
+    if not exam:
+        raise HTTPException(status_code=404, detail="Exam not found")
+        
+    results = db.query(Result).filter(Result.exam_id == exam.id).all()
+    
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Roll Number", "Student Name", "Correct Answers", 
+        "Wrong Answers", "Unanswered", "Score", "Max Marks", 
+        "Percentage", "Submission Date"
+    ])
+    
+    for r in results:
+        student = db.query(User).filter(User.id == r.student_id).first()
+        student_name = student.full_name or student.username if student else "N/A"
+        date_str = r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else "N/A"
+        writer.writerow([
+            r.roll_number,
+            student_name,
+            r.correct_answers,
+            r.wrong_answers,
+            r.unanswered,
+            r.score,
+            exam.max_marks,
+            f"{r.percentage:.2f}%",
+            date_str
+        ])
+        
+    output.seek(0)
+    filename = f"exam_{exam_id}_results.csv"
+    return StreamingResponse(
+        io.BytesIO(output.getvalue().encode('utf-8')),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
 # Student Dashboard endpoints

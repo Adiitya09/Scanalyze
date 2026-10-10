@@ -14,7 +14,8 @@ import {
   FireIcon,
   ClockIcon,
   MagnifyingGlassIcon,
-  XMarkIcon
+  XMarkIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import { teacherAPI, examAPI } from '../utils/api';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -53,6 +54,23 @@ const TeacherDashboard = () => {
       toast.error('Failed to load exams');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExportCSV = async (examId) => {
+    try {
+      const response = await examAPI.exportCSV(examId);
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `exam_${examId}_results.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Results exported to CSV successfully! 📥');
+    } catch (error) {
+      console.error('Failed to export CSV:', error);
+      toast.error('Failed to export CSV results');
     }
   };
 
@@ -253,10 +271,20 @@ const TeacherDashboard = () => {
                               variant="ghost"
                               size="sm"
                               className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="View Statistics"
                             >
                               <ChartBarIcon className="h-4 w-4" />
                             </Button>
                           </Link>
+                          <Button
+                            onClick={() => handleExportCSV(exam.exam_id)}
+                            variant="ghost"
+                            size="sm"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity text-primary-600 hover:text-primary-700 hover:bg-primary-50"
+                            title="Export Results (CSV)"
+                          >
+                            <ArrowDownTrayIcon className="h-4 w-4" />
+                          </Button>
                           <Button
                             onClick={() => handleDeleteExam(exam.exam_id)}
                             variant="ghost"

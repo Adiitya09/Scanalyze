@@ -225,14 +225,14 @@ const ViewResult = () => {
                 />
                 <YAxis domain={[-1, 1]} ticks={[-1, 0, 1]} />
                 <Tooltip content={<CustomTooltip />} />
-                <Bar 
-                  dataKey="status" 
-                  fill={(entry) => {
-                    if (entry === 1) return '#10b981'; // Correct - green
-                    if (entry === -1) return '#ef4444'; // Wrong - red
-                    return '#6b7280'; // Unanswered - gray
-                  }}
-                />
+                <Bar dataKey="status">
+                  {questionData.slice(0, 20).map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.status === 1 ? '#10b981' : entry.status === -1 ? '#ef4444' : '#6b7280'} 
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>

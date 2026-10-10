@@ -56,10 +56,51 @@ def get_db():
 
 # Create tables
 def create_tables():
-    from models import Base
+    import models
     Base.metadata.create_all(bind=engine)
+
+# Seed demo users for development
+def seed_demo_users():
+    """Seed demo teacher and student accounts for development if none exist."""
+    import models
+    from auth import get_password_hash
+    db = SessionLocal()
+    try:
+        teacher = db.query(models.User).filter(models.User.username == "teacher").first()
+        if not teacher:
+            teacher = models.User(
+                username="teacher",
+                email="teacher@scanalyze.com",
+                full_name="Prof. Demo Teacher",
+                role="teacher",
+                roll_number=None,
+                hashed_password=get_password_hash("password"),
+                is_active=True
+            )
+            db.add(teacher)
+
+        student = db.query(models.User).filter(models.User.username == "student").first()
+        if not student:
+            student = models.User(
+                username="student",
+                email="student@scanalyze.com",
+                full_name="Alex Student",
+                role="student",
+                roll_number="STU001",
+                hashed_password=get_password_hash("password"),
+                is_active=True
+            )
+            db.add(student)
+            
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Demo user seeding skipped: {e}")
+    finally:
+        db.close()
 
 # Initialize database
 def init_db():
     create_tables()
-    print("Database tables created successfully!")
+    seed_demo_users()
+    print("Database tables created and initialized successfully!")

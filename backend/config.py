@@ -28,6 +28,10 @@ class Settings:
     CORS_ORIGINS: list = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
         # Current production frontend deployment
         "https://scanalyze-omr-evaluator-app.vercel.app",
         # Active deployment used currently

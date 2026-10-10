@@ -166,7 +166,7 @@ const Login = () => {
               </Button>
 
               <div className="text-center">
-                <span className="text-neutral-500 text-sm">Don't have an account? </span>
+                <span className="text-neutral-500 text-sm">Don&apos;t have an account? </span>
                 <Link
                   to="/register"
                   className="text-primary-600 hover:text-primary-500 font-semibold text-sm transition-colors"

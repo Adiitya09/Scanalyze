@@ -1,11 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, JSON, ForeignKey, Boolean, Float, Index
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from sqlalchemy.dialects.postgresql import UUID
-import uuid
-
-Base = declarative_base()
+from database import Base
 
 class User(Base):
     __tablename__ = "users"

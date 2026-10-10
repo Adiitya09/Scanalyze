@@ -40,18 +40,15 @@ export default function HomePage() {
   useEffect(() => {
     const root = document.documentElement;
     if (darkMode) root.classList.add('dark'); else root.classList.remove('dark');
-    try { localStorage.setItem('theme', darkMode ? 'dark' : 'light'); } catch {}
+    try { localStorage.setItem('theme', darkMode ? 'dark' : 'light'); } catch (err) { void err; }
   }, [darkMode]);
 
   useEffect(() => {
     try {
       const saved = localStorage.getItem('theme');
       if (saved === 'dark') setDarkMode(true);
-    } catch {}
+    } catch (err) { void err; }
   }, []);
-
-  // Particles disabled
-  useEffect(() => {}, []);
 
   useEffect(() => {
     const sections = [heroRef, stepsRef, featuresRef, carouselRef].map(r => r.current).filter(Boolean);

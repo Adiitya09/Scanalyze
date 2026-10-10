@@ -12,12 +12,14 @@ from database import get_db
 from models import User
 from schemas import TokenData
 
+from config import settings
+
 load_dotenv()
 
 # Security configuration
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", 30))
+SECRET_KEY = os.getenv("SECRET_KEY", settings.SECRET_KEY)
+ALGORITHM = os.getenv("JWT_ALGORITHM", settings.ALGORITHM)
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES") or os.getenv("JWT_EXPIRE_MINUTES") or settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

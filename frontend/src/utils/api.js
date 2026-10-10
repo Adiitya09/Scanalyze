@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-// Use environment variable for API URL, fallback to Railway backend for production
+// Use environment variable for API URL, fallback to local backend in development or Railway in production
 const API_BASE_URL = import.meta.env.VITE_API_URL 
   ? `${import.meta.env.VITE_API_URL}/api`
-  : 'https://omr-evaluator-production.up.railway.app/api';
+  : (import.meta.env.DEV ? 'http://localhost:8000/api' : 'https://omr-evaluator-production.up.railway.app/api');
 
 // Create axios instance with default config
 const api = axios.create({
@@ -34,7 +34,9 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      if (typeof window !== 'undefined' && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -55,6 +57,7 @@ export const examAPI = {
   update: (examId, updateData) => api.put(`/exams/${examId}`, updateData),
   delete: (examId) => api.delete(`/exams/${examId}`),
   getStatistics: (examId) => api.get(`/exams/${examId}/statistics`),
+  exportCSV: (examId) => api.get(`/exams/${examId}/export/csv`, { responseType: 'blob' }),
 };
 
 // OMR API

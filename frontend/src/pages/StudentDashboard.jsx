@@ -334,7 +334,7 @@ const StudentDashboard = () => {
                 <li>Note down the Exam ID</li>
                 <li>Fill out your OMR sheet carefully</li>
                 <li>Scan or take a clear photo of your OMR sheet</li>
-                <li>Click "Upload OMR" and submit your file with roll number</li>
+                <li>Click &quot;Upload OMR&quot; and submit your file with roll number</li>
                 <li>View your results instantly after processing</li>
               </ol>
             </div>

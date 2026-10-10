@@ -132,7 +132,7 @@ npm run dev
 ```
 
 **Access:**
-- Frontend: http://localhost:3000
+- Frontend: http://localhost:5173 (Vite development server)
 - Backend API: http://localhost:8000
 - API Docs: http://localhost:8000/docs
 
@@ -141,9 +141,9 @@ npm run dev
 | Role | Username | Password | Roll Number |
 |------|----------|----------|-------------|
 | 👨‍🏫 Teacher | `teacher` | `password` | - |
-| 👨‍🎓 Student | `student` | `password` | `2024001` |
+| 👨‍🎓 Student | `student` | `password` | `STU001` |
 
-> **Note:** Demo accounts for testing. Production requires email validation and secure passwords.
+> **Note:** Demo accounts are automatically initialized for local development and testing. Production requires email validation and secure passwords.
 
 ## 📋 Usage Guide
 

@@ -15,7 +15,13 @@ const CreateExam = () => {
     number_of_choices: 4,
     max_marks: 10,
   });
-  const [answerKey, setAnswerKey] = useState({});
+  const [answerKey, setAnswerKey] = useState(() => {
+    const initial = {};
+    for (let i = 1; i <= 10; i++) {
+      initial[i.toString()] = 'A';
+    }
+    return initial;
+  });
 
   // Generate choices based on number_of_choices
   const getAllChoices = () => {

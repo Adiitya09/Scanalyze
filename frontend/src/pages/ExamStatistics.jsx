@@ -7,7 +7,8 @@ import {
   TrophyIcon,
   BookOpenIcon,
   ArrowUpIcon,
-  ArrowDownIcon
+  ArrowDownIcon,
+  ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
 import { 
   BarChart, 
@@ -31,6 +32,27 @@ const ExamStatistics = () => {
   const { examId } = useParams();
   const [statistics, setStatistics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+
+  const handleExportCSV = async () => {
+    try {
+      setExporting(true);
+      const response = await examAPI.exportCSV(examId);
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `exam_${examId}_results.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success('Results exported to CSV successfully! 📥');
+    } catch (error) {
+      console.error('Failed to export CSV:', error);
+      toast.error('Failed to export CSV results');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     fetchStatistics();
@@ -114,12 +136,23 @@ const ExamStatistics = () => {
               <p className="mt-2 text-gray-600">{statistics.exam_title}</p>
             </div>
           </div>
-          <Link
-            to="/teacher/dashboard"
-            className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-          >
-            Back to Dashboard
-          </Link>
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={handleExportCSV}
+              disabled={exporting}
+              className="inline-flex items-center px-4 py-2 border border-primary-600 rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+            >
+              <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
+              {exporting ? 'Exporting...' : 'Export Results (CSV)'}
+            </button>
+            <Link
+              to="/teacher/dashboard"
+              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            >
+              Back to Dashboard
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -226,14 +259,14 @@ const ExamStatistics = () => {
                 />
                 <YAxis domain={[0, 100]} />
                 <Tooltip formatter={(value) => [`${value.toFixed(1)}%`, 'Accuracy']} />
-                <Bar 
-                  dataKey="accuracy" 
-                  fill={(entry) => {
-                    if (entry >= 75) return '#10b981'; // Easy - green
-                    if (entry >= 50) return '#f59e0b'; // Medium - amber
-                    return '#ef4444'; // Hard - red
-                  }}
-                />
+                <Bar dataKey="accuracy">
+                  {questionAccuracyData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.accuracy >= 75 ? '#10b981' : entry.accuracy >= 50 ? '#f59e0b' : '#ef4444'} 
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -390,7 +423,7 @@ const ExamStatistics = () => {
             <div className="mt-2 text-sm text-blue-700">
               <ul className="space-y-1">
                 <li>• {statistics.total_students} students attempted this exam</li>
-                <li>• Average performance: {statistics.average_score} marks ({((statistics.average_score / statistics.highest_score) * 100).toFixed(1)}%)</li>
+                <li>• Average performance: {statistics.average_score} marks ({statistics.highest_score > 0 ? ((statistics.average_score / statistics.highest_score) * 100).toFixed(1) : 0}%)</li>
                 <li>• Pass rate: {statistics.pass_rate.toFixed(1)}% ({Math.round((statistics.pass_rate / 100) * statistics.total_students)} students passed)</li>
                 <li>• Score range: {statistics.lowest_score} - {statistics.highest_score} marks</li>
                 <li>• Most challenging areas: Questions with accuracy below 50% need review</li>

@@ -45,7 +45,7 @@ const ViewExam = () => {
         <BookOpenIcon className="mx-auto h-12 w-12 text-gray-400" />
         <h3 className="mt-2 text-sm font-medium text-gray-900">Exam not found</h3>
         <p className="mt-1 text-sm text-gray-500">
-          The exam you're looking for doesn't exist or is no longer active.
+          The exam you&apos;re looking for doesn&apos;t exist or is no longer active.
         </p>
         <div className="mt-6">
           <Link
@@ -59,7 +59,7 @@ const ViewExam = () => {
     );
   }
 
-  const choices = ['A', 'B', 'C', 'D', 'E'];
+  const choices = Array.from({ length: exam?.number_of_choices || 4 }, (_, i) => String.fromCharCode(65 + i));
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -199,7 +199,7 @@ const ViewExam = () => {
                   <li>Make sure to fill the bubbles completely</li>
                   <li>Write your roll number clearly on the OMR sheet</li>
                   <li>Take a clear, well-lit photo or scan of your completed sheet</li>
-                  <li>Upload the image using the "Upload OMR Sheet" button above</li>
+                  <li>Upload the image using the &quot;Upload OMR Sheet&quot; button above</li>
                   <li>You can view your results immediately after processing</li>
                 </ol>
               </div>
